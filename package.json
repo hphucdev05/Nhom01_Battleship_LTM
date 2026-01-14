@@ -1,0 +1,24 @@
+{
+  "name": "final_commit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hphucdev05/Nhom01_LTM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hphucdev05/Nhom01_LTM/issues"
+  },
+  "homepage": "https://github.com/hphucdev05/Nhom01_LTM#readme",
+  "dependencies": {
+    "socket.io": "^4.8.3"
+  }
+}
