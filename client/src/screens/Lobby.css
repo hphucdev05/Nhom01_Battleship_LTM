@@ -1,0 +1,44 @@
+.lobby-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.lobby-card {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 30px;
+  border-radius: 12px;
+  width: 320px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  color: white;
+}
+
+.lobby-card h2 {
+  margin-bottom: 20px;
+}
+
+.lobby-card input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 6px;
+}
+
+.lobby-card button {
+  width: 100%;
+  padding: 10px;
+  background: #00c6ff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.lobby-card button:hover {
+  background: #009fe3;
+}
