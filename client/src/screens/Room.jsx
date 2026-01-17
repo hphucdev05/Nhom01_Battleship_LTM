@@ -1,67 +1,35 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Room.css";
-
-const Room = () => {
-  return (
-    <div className="room-container">
-      <div className="video-area">
-        <div className="video-box">Local Video</div>
-        <div className="video-box">Remote Video</div>
-      </div>
-
-      <div className="sidebar">
-        <h3>Chat</h3>
-        <div className="chat-box">
-          <p className="system-msg">User joined the room</p>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Type a message..."
-          className="chat-input"
-        />
-      </div>
-
-      <div className="control-bar">
-        <button>🎤</button>
-        <button>🎥</button>
-        <button className="leave-btn">Leave</button>
-      </div>
-    </div>
-  );
-};
-import { useEffect, useRef, useState } from "react";
 import PeerService from "../services/Peer";
 
 const Room = () => {
+  // 🎥 Video refs
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
 
+  // 💬 Chat DataChannel
+  const chatChannelRef = useRef(null);
+  const [messages, setMessages] = useState([]);
+  const [messageInput, setMessageInput] = useState("");
+
+  // 🎬 Streams
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
 
   // 1️⃣ LẤY CAMERA + MIC
   useEffect(() => {
     const getMedia = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
 
-        setLocalStream(stream);
+      setLocalStream(stream);
+      localVideoRef.current.srcObject = stream;
 
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
-        // add track vào PeerConnection
-        stream.getTracks().forEach((track) => {
-          PeerService.peer.addTrack(track, stream);
-        });
-      } catch (err) {
-        console.error("Error accessing media devices", err);
-      }
+      stream.getTracks().forEach((track) => {
+        PeerService.peer.addTrack(track, stream);
+      });
     };
 
     getMedia();
@@ -72,40 +40,93 @@ const Room = () => {
     PeerService.peer.ontrack = (event) => {
       const stream = event.streams[0];
       setRemoteStream(stream);
+      remoteVideoRef.current.srcObject = stream;
+    };
 
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = stream;
-      }
+    // 🔹 NHẬN DATA CHANNEL (RECEIVER)
+    PeerService.peer.ondatachannel = (event) => {
+      const channel = event.channel;
+
+      channel.onopen = () => {
+        console.log("💬 Chat channel connected");
+      };
+
+      channel.onmessage = (event) => {
+        setMessages((prev) => [
+          ...prev,
+          { from: "remote", text: event.data },
+        ]);
+      };
+
+      chatChannelRef.current = channel;
     };
   }, []);
 
+  // 🔹 TẠO DATA CHANNEL (CALLER)
+  const setupChatChannel = () => {
+    const channel = PeerService.peer.createDataChannel("chat");
+
+    channel.onopen = () => {
+      console.log("💬 Chat channel opened");
+    };
+
+    channel.onmessage = (event) => {
+      setMessages((prev) => [
+        ...prev,
+        { from: "remote", text: event.data },
+      ]);
+    };
+
+    chatChannelRef.current = channel;
+  };
+
+  // 📌 GỌI HÀM NÀY KHI BÊN NÀY LÀ CALLER
+  // setupChatChannel();
+
+  // 💬 GỬI TIN NHẮN
+  const handleSendMessage = () => {
+    if (!messageInput || !chatChannelRef.current) return;
+
+    chatChannelRef.current.send(messageInput);
+
+    setMessages((prev) => [...prev, { from: "me", text: messageInput }]);
+    setMessageInput("");
+  };
+
   return (
-    <div style={{ display: "flex", gap: "20px" }}>
-      <div>
-        <h4>Local Video</h4>
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          style={{ width: "300px", background: "#000" }}
-        />
+    <div className="room-container">
+      {/* 🎥 VIDEO */}
+      <div className="video-area">
+        <video ref={localVideoRef} autoPlay muted playsInline />
+        <video ref={remoteVideoRef} autoPlay playsInline />
       </div>
 
-      <div>
-        <h4>Remote Video</h4>
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          style={{ width: "300px", background: "#000" }}
-        />
+      {/* 💬 CHAT */}
+      <div className="sidebar">
+        <h3>Chat</h3>
+
+        <div className="chat-box">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={msg.from === "me" ? "msg-me" : "msg-remote"}
+            >
+              {msg.text}
+            </div>
+          ))}
+        </div>
+
+        <div className="chat-input">
+          <input
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            placeholder="Type a message..."
+          />
+          <button onClick={handleSendMessage}>Send</button>
+        </div>
       </div>
     </div>
   );
 };
-
-export default Room;
-
 
 export default Room;
