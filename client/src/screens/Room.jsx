@@ -94,7 +94,9 @@ const Room = () => {
   };
 
   return (
-    <div className="room-container">
+  <div className="room-container">
+
+    <div className="main-content">
       {/* 🎥 VIDEO */}
       <div className="video-area">
         <video ref={localVideoRef} autoPlay muted playsInline />
@@ -122,11 +124,19 @@ const Room = () => {
             onChange={(e) => setMessageInput(e.target.value)}
             placeholder="Type a message..."
           />
-          <button onClick={handleSendMessage}>Send</button>
+          <button>Send</button>
         </div>
       </div>
     </div>
-  );
+
+    {/* 🎛 CONTROL BAR */}
+    <div className="control-bar">
+      <button>Call</button>
+      <button>Mute</button>
+      <button>Leave</button>
+    </div>
+
+  </div>
 };
 
 export default Room;
