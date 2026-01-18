@@ -2,6 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import "./Room.css";
 import PeerService from "../services/Peer";
 
+// 📁 File Transfer
+const CHUNK_SIZE = 16 * 1024; // 16KB
+const incomingFileRef = useRef({
+  metadata: null,
+  chunks: [],
+});
+
+
 const Room = () => {
   // 🎥 Video refs
   const localVideoRef = useRef(null);
@@ -70,12 +78,51 @@ const Room = () => {
       console.log("💬 Chat channel opened");
     };
 
-    channel.onmessage = (event) => {
-      setMessages((prev) => [
-        ...prev,
-        { from: "remote", text: event.data },
-      ]);
-    };
+   channel.onmessage = (event) => {
+  // 📄 Nhận metadata file
+  if (typeof event.data === "string") {
+    const data = JSON.parse(event.data);
+
+    if (data.type === "file-meta") {
+      incomingFileRef.current.metadata = data;
+      incomingFileRef.current.chunks = [];
+      console.log("📥 Receiving file:", data.fileName);
+      return;
+    }
+
+    // 💬 Chat message
+    setMessages((prev) => [
+      ...prev,
+      { from: "remote", text: data.text || event.data },
+    ]);
+    return;
+  }
+
+  // 📦 Nhận chunk nhị phân
+  incomingFileRef.current.chunks.push(event.data);
+
+  const { metadata, chunks } = incomingFileRef.current;
+
+  const receivedSize = chunks.reduce(
+    (acc, chunk) => acc + chunk.byteLength,
+    0
+  );
+
+  if (receivedSize >= metadata.fileSize) {
+    const blob = new Blob(chunks);
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = metadata.fileName;
+    a.click();
+
+    console.log("✅ File reconstructed in RAM");
+
+    incomingFileRef.current = { metadata: null, chunks: [] };
+  }
+};
+
 
     chatChannelRef.current = channel;
   };
@@ -92,6 +139,32 @@ const Room = () => {
     setMessages((prev) => [...prev, { from: "me", text: messageInput }]);
     setMessageInput("");
   };
+
+  const handleFileSelect = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !chatChannelRef.current) return;
+
+  // 📄 Gửi metadata trước
+  chatChannelRef.current.send(
+    JSON.stringify({
+      type: "file-meta",
+      fileName: file.name,
+      fileSize: file.size,
+    })
+  );
+
+  let offset = 0;
+
+  while (offset < file.size) {
+    const slice = file.slice(offset, offset + CHUNK_SIZE);
+    const buffer = await slice.arrayBuffer();
+    chatChannelRef.current.send(buffer);
+    offset += CHUNK_SIZE;
+  }
+
+  console.log("📤 File sent:", file.name);
+};
+
 
   return (
   <div className="room-container">
@@ -126,6 +199,13 @@ const Room = () => {
           />
           <button>Send</button>
         </div>
+
+        <input
+  type="file"
+  onChange={handleFileSelect}
+  style={{ marginTop: "10px" }}
+/>
+
       </div>
     </div>
 
