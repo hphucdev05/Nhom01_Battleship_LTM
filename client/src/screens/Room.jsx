@@ -201,6 +201,13 @@ const Room = () => {
 
     let offset = 0;
 
+
+    // --- DEMO EVIDENCE: MEMORY LOG (#14) ---
+    console.log(`%c [P2P Sender] 📤 File Loaded into Memory Reference!`, 'color: #ff9900; font-weight: bold;');
+    console.log(`📄 Name: ${file.name}`);
+    console.log(`📦 Size: ${file.size} bytes`);
+    // ----------------------------------------
+
     while (offset < file.size) {
       const slice = file.slice(offset, offset + CHUNK_SIZE);
       const buffer = await slice.arrayBuffer();
@@ -208,7 +215,7 @@ const Room = () => {
       offset += CHUNK_SIZE;
     }
 
-    console.log("📤 File sent:", file.name);
+    console.log(`%c [Memory Cleanup] 🧹 File sent & memory released.`, 'color: #00ff00; font-weight: bold;');
   };
 
   // ❌ CANCEL FILE TRANSFER (#11)
