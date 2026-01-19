@@ -149,9 +149,6 @@ io.on("connection", (socket) => {
 
     const handleLeave = (socket, room) => {
         const email = socketIdToEmailMap.get(socket.id);
-
-        // 🧹 Cleanup & Logging (#12)
-        console.log(`👋 User leaving: ${email} from room ${room}`);
         socket.to(room).emit("user:left", { id: socket.id, email });
 
         if (roomToHostMap.get(room) === socket.id) {
@@ -159,11 +156,9 @@ io.on("connection", (socket) => {
             if (clients.length > 0) {
                 roomToHostMap.set(room, clients[0]);
                 io.to(clients[0]).emit("host:status", { isHost: true });
-                console.log(`⭐ Host transferred to ${socketIdToEmailMap.get(clients[0])}`);
             } else {
                 roomToHostMap.delete(room);
                 lockedRooms.delete(room); // Xóa lock nếu phòng trống
-                console.log(`🏠 Room ${room} is now empty`);
             }
         }
         socket.leave(room);
@@ -179,23 +174,9 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         const email = socketIdToEmailMap.get(socket.id);
-        const room = socketIdToRoomMap.get(socket.id);
-
-        // 🧹 Cleanup (#12)
-        if (email) {
-            console.log(`🚪 User disconnected: ${email} (${socket.id})`);
-            emailToSocketIdMap.delete(email);
-        }
-
+        if (email) emailToSocketIdMap.delete(email);
         socketIdToEmailMap.delete(socket.id);
         socketIdToRoomMap.delete(socket.id);
-
-        // Đảm bảo thông báo user:left nếu chưa được gọi
-        if (room) {
-            socket.to(room).emit("user:left", { id: socket.id, email });
-        }
-
-        console.log(`📊 Active connections: ${socketIdToEmailMap.size}`);
     });
 });
 
