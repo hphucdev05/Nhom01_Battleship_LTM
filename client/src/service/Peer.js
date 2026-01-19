@@ -1,39 +1,102 @@
 class PeerService {
   constructor() {
-    if (!this.peer) {
-      this.peer = new RTCPeerConnection({
-        iceServers: [
-          {
-            urls: [
-              "stun:stun.l.google.com:19302",
-              "stun:global.stun.twilio.com:3478",
-            ],
-          },
-        ],
-      });
-    }
+    this.peer = new RTCPeerConnection({
+      iceServers: [
+        // Google STUN High Availability
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" },
+        // Mozilla STUN
+        { urls: "stun:stun.services.mozilla.com" },
+        // Twilio STUN (Global)
+        { urls: "stun:global.stun.twilio.com:3478" },
+        // Free TURN (OpenRelay - Thử nghiệm, có thể chậm nhưng giúp xuyên NAT)
+        {
+          urls: "turn:openrelay.metered.ca:80",
+          username: "openrelayproject",
+          credential: "openrelayproject"
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443",
+          username: "openrelayproject",
+          credential: "openrelayproject"
+        },
+        {
+          urls: "turn:openrelay.metered.ca:443?transport=tcp",
+          username: "openrelayproject",
+          credential: "openrelayproject"
+        }
+      ],
+      iceCandidatePoolSize: 10,
+      iceTransportPolicy: 'all', // Cho phép cả Relay và Host
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
+    });
+
+    this.chatChannel = null;
+    this.fileChannel = null;
+    this.iceCandidateQueue = [];
+    this.isRemoteSet = false;
   }
 
-  async getAnswer(offer) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(offer);
-      const ans = await this.peer.createAnswer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(ans));
-      return ans;
-    }
-  }
-
-  async setLocalDescription(ans) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
-    }
-  }
-
+  // Create offer
   async getOffer() {
-    if (this.peer) {
-      const offer = await this.peer.createOffer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(offer));
-      return offer;
+    // Chỉ tạo offer khi stable hoặc ban đầu
+    if (this.peer.signalingState !== "stable" && this.peer.signalingState !== "have-local-offer") return;
+
+    const offer = await this.peer.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true
+    });
+    await this.peer.setLocalDescription(offer);
+    return offer;
+  }
+
+  // Create answer
+  async getAnswer(offer) {
+    // Đảm bảo setRemote trước
+    if (this.peer.signalingState !== "have-remote-offer") {
+      await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
+    }
+    this.isRemoteSet = true;
+    this.processIceQueue();
+
+    const answer = await this.peer.createAnswer();
+    await this.peer.setLocalDescription(answer);
+    return answer;
+  }
+
+  // Set remote description (cho answer)
+  async setLocalDescription(ans) {
+    if (this.peer.signalingState === "have-local-offer") {
+      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
+      this.isRemoteSet = true;
+      this.processIceQueue();
+    }
+  }
+
+  // Add ICE candidate with buffer safety (#13 - Fix lỗi Timing)
+  async addIceCandidate(candidate) {
+    if (this.isRemoteSet && this.peer.remoteDescription) {
+      try {
+        await this.peer.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (error) {
+        console.error("Error adding ICE candidate:", error);
+      }
+    } else {
+      // Nếu remote description chưa set, queue lại candidate
+      this.iceCandidateQueue.push(candidate);
+    }
+  }
+
+  // Xử lý queue khi remote description đã set
+  processIceQueue() {
+    while (this.iceCandidateQueue.length > 0) {
+      const candidate = this.iceCandidateQueue.shift();
+      this.peer.addIceCandidate(new RTCIceCandidate(candidate))
+        .catch(error => console.error("Process buffered ICE Error:", error));
     }
   }
 }
