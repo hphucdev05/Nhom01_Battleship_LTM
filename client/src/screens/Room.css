@@ -145,8 +145,94 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* ====== File Transfer Progress (#11) ====== */
+.file-progress-section {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.file-progress-section h4 {
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  color: #94a3b8;
+}
+
+.progress-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.progress-header small {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+.btn-close-mini {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.btn-close-mini:hover {
+  background: #c82333;
+}
+
+.progress-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  transition: width 0.3s ease;
+}
+
+.progress-fill.cancelled-bar {
+  background: #dc3545;
+}
+
+.progress-item-inner span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  min-width: 35px;
+  text-align: right;
+}
+
+.progress-item.cancelled {
+  opacity: 0.6;
 }

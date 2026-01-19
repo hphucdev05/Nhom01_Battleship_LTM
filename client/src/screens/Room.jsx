@@ -9,6 +9,29 @@ const incomingFileRef = useRef({
   chunks: [],
 });
 
+// 📊 Progress Item Component (#11)
+const ProgressItem = ({ id, name, progress, type, status, onCancel }) => (
+  <div className={`progress-item ${type} ${status}`}>
+    <div className="progress-header">
+      <small>
+        {status === 'cancelled' ? '❌ Cancelled' :
+          status === 'completed' ? '✅ Completed' :
+            progress === 100 ? '✅ Done' :
+              type === 'upload' ? '📤 Sending...' : `📥 Receiving ${name}...`}
+      </small>
+      {status !== 'cancelled' && status !== 'completed' && progress !== 100 && (
+        <button className="btn-close-mini" onClick={onCancel} title="Cancel Transfer">×</button>
+      )}
+    </div>
+    <div className="progress-item-inner">
+      <div className="progress-bar">
+        <div className={`progress-fill ${status === 'cancelled' ? 'cancelled-bar' : ''}`} style={{ width: `${progress}%` }}></div>
+      </div>
+      <span>{progress}%</span>
+    </div>
+  </div>
+);
+
 
 const Room = () => {
   // 🎥 Video refs
@@ -39,6 +62,12 @@ const Room = () => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3000);
   }, []);
+
+  // 📁 File Transfer Progress (#11)
+  const [files, setFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [downloadProgress, setDownloadProgress] = useState({});
+  const activeTransfers = useRef(new Set());
 
 
   // 1️⃣ LẤY CAMERA + MIC
@@ -180,6 +209,15 @@ const Room = () => {
     }
 
     console.log("📤 File sent:", file.name);
+  };
+
+  // ❌ CANCEL FILE TRANSFER (#11)
+  const handleCancelFile = (fileId) => {
+    activeTransfers.current.delete(fileId);
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'cancelled' } : f));
+    setUploadProgress(prev => { const n = { ...prev }; delete n[fileId]; return n; });
+    setDownloadProgress(prev => { const n = { ...prev }; delete n[fileId]; return n; });
+    showToast("❌ File transfer cancelled");
   };
 
   // 🖥️ SCREEN SHARE
@@ -324,6 +362,24 @@ const Room = () => {
             onChange={handleFileSelect}
             style={{ marginTop: "10px" }}
           />
+
+          {/* 📊 File Transfer Progress (#11) */}
+          {files.length > 0 && (
+            <div className="file-progress-section">
+              <h4>File Transfers</h4>
+              {files.map(f => (
+                <ProgressItem
+                  key={f.id}
+                  id={f.id}
+                  name={f.name}
+                  progress={uploadProgress[f.id] || downloadProgress[f.id] || 0}
+                  type={f.type}
+                  status={f.status}
+                  onCancel={() => handleCancelFile(f.id)}
+                />
+              ))}
+            </div>
+          )}
 
         </div>
       </div>
