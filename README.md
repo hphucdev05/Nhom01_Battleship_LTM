@@ -1,6 +1,6 @@
 # WebRTC-Based Real-Time Communication System
 > **Đồ án cuối kỳ - Môn học: Lập trình mạng**
-> **Nhóm: 05 | Đề tài: Hệ thống truyền thông thời gian thực P2P**
+> **Nhóm: 01 | Đề tài: Hệ thống truyền thông thời gian thực P2P**
 
 ## 🌐 Giới thiệu
 Dự án xây dựng một nền tảng hội nghị trực tuyến dựa trên giao thức **WebRTC (Web Real-Time Communication)**, cho phép kết nối ngang hàng (Peer-to-Peer) trực tiếp giữa các trình duyệt. Hệ thống tối ưu hóa băng thông bằng cách truyền dữ liệu Media và Data trực tiếp mà không thông qua server trung gian sau khi đã thiết lập xong kết nối (Signaling).
@@ -62,4 +62,4 @@ npm run dev
 *   **Serialization:** Chuyển đổi tệp tin sang ArrayBuffer để truyền tải qua kênh dữ liệu P2P.
 
 ---
-© 2026 - Nhóm 05 - HCMC University of Technology and Education.
+© 2026 - Nhóm 01 
