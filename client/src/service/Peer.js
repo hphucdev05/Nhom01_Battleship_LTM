@@ -2,35 +2,19 @@ class PeerService {
   constructor() {
     this.peer = new RTCPeerConnection({
       iceServers: [
-        // Google STUN High Availability
+        // Google STUN (Free & Fast)
         { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
-        // Mozilla STUN
-        { urls: "stun:stun.services.mozilla.com" },
-        // Twilio STUN (Global)
         { urls: "stun:global.stun.twilio.com:3478" },
-        // Free TURN (OpenRelay - Thử nghiệm, có thể chậm nhưng giúp xuyên NAT)
+
+        // 🔥 YOUR AZURE TURN SERVER (Private & Fast)
         {
-          urls: "turn:openrelay.metered.ca:80",
-          username: "openrelayproject",
-          credential: "openrelayproject"
-        },
-        {
-          urls: "turn:openrelay.metered.ca:443",
-          username: "openrelayproject",
-          credential: "openrelayproject"
-        },
-        {
-          urls: "turn:openrelay.metered.ca:443?transport=tcp",
-          username: "openrelayproject",
-          credential: "openrelayproject"
+          urls: "turn:20.197.12.68:3478",
+          username: "webrtc",
+          credential: "123456"
         }
       ],
       iceCandidatePoolSize: 10,
-      iceTransportPolicy: 'all', // Cho phép cả Relay và Host
+      iceTransportPolicy: 'all',
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require'
     });
